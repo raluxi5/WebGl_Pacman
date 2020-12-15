@@ -1,0 +1,87 @@
+<html>
+
+    <!------------------Phong Shading--------------------------->
+    <!------------------Pixel Shading--------------------------->
+    <script id="Pvertex-shader" type="x-shader/x-vertex">
+
+        attribute  vec3 vPosition; //vector coordinates of objects
+        attribute  vec3 vNormal;   //vector normals of objects
+
+        uniform mat4 modelviewprojMatrix; //combination of model/view/projection matrix for object position
+        uniform mat4 modelViewMatrix;     //object's view and transformations matrix
+        uniform mat3 normalMatrix;        //matrix of normals
+
+        varying vec3 N; //normal vector on plane to be passed to the fragment-shader
+        varying vec3 posToLight; //object position to point light-source to be passed to the fragment-shader
+
+        void main()
+        {
+
+             posToLight = vec3(modelViewMatrix * vec4(vPosition,1.0)); //object position to point light-source
+             N = vec3( normalMatrix * vNormal); //normal on plane
+
+             gl_Position = modelviewprojMatrix  * vec4(vPosition,1.0);
+
+        }
+
+    </script>
+
+
+    <script id="Pfragment-shader" type="x-shader/x-fragment">
+
+        precision mediump float;
+
+        varying vec3 N; //from vertex-shader
+        varying vec3 posToLight; //from vertex-shader
+
+        //Lighting components
+        uniform vec4 lightPosition; //position of point light-source in eye coordinates
+        uniform vec4 Iambient;   //ambient light
+        uniform vec4 Idiffuse;   //diffuse light
+        uniform vec3 fColor;
+
+        void main()
+        {
+            //Phong illumination model with the 4 vectors N,L,E,R to compute lighting equation
+
+            vec3 L;
+            if(lightPosition.w == 0.0) //distant light source
+                L = normalize(lightPosition).xyz;
+            else
+                L = normalize(lightPosition.xyz - posToLight); //point light source
+            vec3 E = normalize( -posToLight );                  //from where the viewer looks, eyes
+            vec3 R = normalize(-reflect(L,N));                   //reflected light
+
+            //Light components
+            //calculate Ambient Term:
+            vec4 ambient = Iambient; //constant value
+
+            //calculate Diffuse Term:
+            float diffuseCoeff = max( dot(L, N), 0.0 ); //material diffuse coeff
+            vec4  diffuse = diffuseCoeff * Idiffuse; //full diffuse light
+
+            gl_FragColor = (ambient + diffuse) * vec4(fColor,1);
+        }
+
+    </script>
+
+
+    <script type="text/javascript" src="gl-matrix-min.js"></script>
+    <script type="text/javascript" src="main.js"></script>
+    <script type="text/javascript" src="webgl-utils.js"></script>
+    <script type="text/javascript" src="shaderProgram.js"></script>
+    <script type="text/javascript" src="objParser.js"></script>
+    <script type="text/javascript" src="labyrinth.js"></script>
+    <script type="text/javascript" src="pacman.js"></script>
+    <script type="text/javascript" src="lighting.js"></script>
+    <script type="text/javascript" src="ghost.js"></script>
+
+
+<body>
+<canvas id="gl-canvas" width="1200" height="750">
+    Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+
+
+</body>
+</html>
